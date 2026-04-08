@@ -10,9 +10,8 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'IBM Plex Sans KR',sans-serif;background:#eef2ef;}
-#form-panel{padding:0 0 24px 0;max-width:640px;margin:0 auto;}
-header{background:#507b61;color:white;padding:16px;text-align:center;font-size:18px;font-weight:500;margin-bottom:12px;}
-.sec{background:white;border-radius:12px;margin:0 12px 10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+header{background:#507b61;color:white;padding:16px;text-align:center;font-size:18px;font-weight:500;}
+.sec{background:white;border-radius:12px;margin:0 0 10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.07);}
 .sec h3{font-size:13px;font-weight:500;color:#507b61;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e4ede7;}
 .sec input[type=text]{display:block;width:100%;border:none;border-bottom:1px solid #d0ddd4;padding:8px 4px;font-family:'IBM Plex Sans KR',sans-serif;font-size:15px;outline:none;background:transparent;margin-bottom:6px;}
 .sec input[type=text]:focus{border-bottom-color:#507b61;}
@@ -28,50 +27,72 @@ header{background:#507b61;color:white;padding:16px;text-align:center;font-size:1
 .row-cnt{font-size:12px;color:#888;margin-bottom:8px;}
 #btn-add{display:flex;align-items:center;gap:4px;background:none;border:1.5px dashed #507b61;border-radius:8px;padding:8px 14px;color:#507b61;font-family:'IBM Plex Sans KR',sans-serif;font-size:13px;cursor:pointer;margin-top:6px;}
 #btn-add:disabled{opacity:0.4;cursor:not-allowed;}
-#btn-print{display:block;width:calc(100% - 24px);margin:12px 12px 0;background:#507b61;color:white;border:none;border-radius:12px;padding:16px;font-family:'IBM Plex Sans KR',sans-serif;font-size:16px;font-weight:500;cursor:pointer;}
+#btn-print{display:block;width:100%;background:#507b61;color:white;border:none;border-radius:12px;padding:16px;font-family:'IBM Plex Sans KR',sans-serif;font-size:16px;font-weight:500;cursor:pointer;}
 #btn-print:active{background:#3d5f4a;}
-#preview-wrap{max-width:640px;margin:0 auto;padding:12px 12px 32px;}
+
+/* ── 모바일 (기본) ── */
+#layout{display:flex;flex-direction:column;}
+#form-panel{padding:0 12px 24px;order:1;}
+#form-panel header{margin:0 -12px 12px;border-radius:0;}
+#preview-col{order:2;padding:0 12px 32px;}
 #preview{background:white;box-shadow:0 2px 12px rgba(0,0,0,.12);border-radius:4px;overflow:hidden;}
 #preview svg{width:100%;height:auto;display:block;}
+#btn-print-wrap{padding:12px 12px 0;order:1;}/* 모바일: 폼 아래 버튼 */
+
+/* ── PC (768px 이상) ── */
+@media(min-width:768px){
+  body{overflow-y:scroll;}
+  header{display:none;}/* 상단 헤더 숨김, 사이드바 헤더 사용 */
+  #layout{flex-direction:row;align-items:flex-start;max-width:1200px;margin:0 auto;padding:24px 24px;gap:28px;}
+  #form-panel{order:1;width:380px;flex-shrink:0;padding:0;position:sticky;top:24px;max-height:calc(100vh - 48px);overflow-y:auto;}
+  #form-panel .panel-header{display:block;background:#507b61;color:white;padding:14px 16px;text-align:center;font-size:17px;font-weight:500;border-radius:12px 12px 0 0;margin-bottom:0;}
+  #form-panel .sec{border-radius:0;margin:0;border-bottom:1px solid #f0f0f0;}
+  #form-panel .sec:last-of-type{border-radius:0 0 12px 12px;}
+  #btn-print-wrap{order:2;padding:0;margin-top:0;}
+  #preview-col{order:2;flex:1;padding:0;display:flex;flex-direction:column;gap:16px;}
+  #preview{border-radius:8px;}
+  #btn-print{border-radius:10px;padding:14px;}
+}
 </style>
 </head>
 <body>
-<div id="form-panel">
-  <header>공사 안내문 편집기</header>
-  <div class="sec">
-    <h3>안내 문구 (4줄)</h3>
-    <input id="f-intro-0" type="text" placeholder="첫째 줄">
-    <input id="f-intro-1" type="text" placeholder="둘째 줄">
-    <input id="f-intro-2" type="text" placeholder="셋째 줄">
-    <input id="f-intro-3" type="text" placeholder="넷째 줄">
-  </div>
-  <div class="sec">
-    <h3>공사 정보</h3>
-    <div class="lbl">공사기간</div>
-    <input id="f-period" type="text" placeholder="예: 4월14일 ~ 4월30일">
-    <div class="lbl">공간세대</div>
-    <input id="f-unit" type="text" placeholder="예: 1403동 303호">
-    <div class="lbl">공사업체</div>
-    <input id="f-company" type="text" placeholder="예: 에이치그리다">
-    <div class="lbl">담당전화</div>
-    <input id="f-phone" type="text" placeholder="예: 02-000-0000">
-  </div>
-  <div class="sec">
-    <h3>공사 일정</h3>
-    <div class="row-cnt" id="row-cnt-label">0행 / 최대 10행</div>
-    <div class="sch-hdr">
-      <span>날짜</span>
-      <span>작업내용</span>
-      <span style="text-align:center">소음</span>
-      <span></span>
+<header>공사 안내문 편집기</header>
+<div id="layout">
+  <div id="form-panel">
+    <div class="panel-header">공사 안내문 편집기</div>
+    <div class="sec">
+      <h3>안내 문구 (4줄)</h3>
+      <input id="f-intro-0" type="text" placeholder="첫째 줄">
+      <input id="f-intro-1" type="text" placeholder="둘째 줄">
+      <input id="f-intro-2" type="text" placeholder="셋째 줄">
+      <input id="f-intro-3" type="text" placeholder="넷째 줄">
     </div>
-    <div id="sch-rows"></div>
-    <button id="btn-add">+ 행 추가</button>
+    <div class="sec">
+      <h3>공사 정보</h3>
+      <div class="lbl">공사기간</div>
+      <input id="f-period" type="text" placeholder="예: 4월14일 ~ 4월30일">
+      <div class="lbl">공간세대</div>
+      <input id="f-unit" type="text" placeholder="예: 1403동 303호">
+      <div class="lbl">공사업체</div>
+      <input id="f-company" type="text" placeholder="예: 에이치그리다">
+      <div class="lbl">담당전화</div>
+      <input id="f-phone" type="text" placeholder="예: 02-000-0000">
+    </div>
+    <div class="sec">
+      <h3>공사 일정</h3>
+      <div class="row-cnt" id="row-cnt-label">0행 / 최대 10행</div>
+      <div class="sch-hdr">
+        <span>날짜</span>
+        <span>작업내용</span>
+        <span style="text-align:center">소음</span>
+        <span></span>
+      </div>
+      <div id="sch-rows"></div>
+      <button id="btn-add">+ 행 추가</button>
+    </div>
   </div>
-  <button id="btn-print">PDF로 저장</button>
-</div>
-<div id="preview-wrap">
-  <div id="preview">
+  <div id="preview-col">
+    <div id="preview">
 <svg width="595" height="842" viewBox="0 0 595 842" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect x="2" y="2" width="591" height="838" fill="white"/>
 <rect x="2" y="2" width="591" height="838" stroke="#507B61" stroke-width="4"/>
@@ -620,6 +641,8 @@ header{background:#507b61;color:white;padding:16px;text-align:center;font-size:1
   <g id="sec2-table"></g>
 </g>
 </svg>
+    </div>
+    <button id="btn-print">PDF로 저장</button>
   </div>
 </div>
 <script>
