@@ -681,23 +681,25 @@ const DEFAULTS = {
 };
 
 // ===== 레이아웃 계산 =====
-// 섹션1(user) = 인트로 텍스트: N≤7 고정, N≥8 파란1번선(TOP_Y)까지 상승
-// 섹션2(user) = sec1(code): 항상 인트로 하단~테이블 상단 정중앙
-// 섹션3(user) = sec2(code) + table: 하단 TABLE_BOTTOM 고정
-function calcLayout(N) {
-  // 인트로 텍스트 이동량 (N≥8이면 TOP_Y까지 올림)
+function calcLayout(N, sec1BBox) {
   const topDeltaY = N >= 8 ? TOP_Y - 173 : 0;
   const introBottom = INTRO_END + topDeltaY;
 
-  // 테이블 영역 상단 (고정 하단에서 역산, N=10이면 파란선까지 확장)
   const tableBottom = N === 10 ? 762 : TABLE_BOTTOM;
   const firstRowTop = tableBottom - N * ROW_PITCH;
   const tableAreaTop = firstRowTop - SEC2_HEADER_H;
   const sec2DeltaY = tableAreaTop - SEC2_NATIVE_TOP;
 
-  // 섹션2(user=불편을..+bullet): introBottom ~ tableAreaTop 정중앙
-  const sec1ActualTop = (introBottom + tableAreaTop - SEC1_HEIGHT) / 2;
-  const sec1DeltaY = sec1ActualTop - SEC1_NATIVE_TOP;
+  // sec1 시각적 정중앙 배치:
+  // getBBox()로 실제 렌더링 크기를 알면 정확히 계산, 없으면 상수 사용
+  let sec1DeltaY;
+  if (sec1BBox && sec1BBox.height > 0) {
+    // deltaY = (introBottom + tableAreaTop - 2*bbox.y - bbox.height) / 2
+    sec1DeltaY = (introBottom + tableAreaTop - 2 * sec1BBox.y - sec1BBox.height) / 2;
+  } else {
+    const sec1ActualTop = (introBottom + tableAreaTop - SEC1_HEIGHT) / 2;
+    sec1DeltaY = sec1ActualTop - SEC1_NATIVE_TOP;
+  }
 
   return { topDeltaY, sec1DeltaY, sec2DeltaY, firstRowTop };
 }
@@ -714,7 +716,14 @@ function svgEl(tag, attrs, cls) {
 function renderTable() {
   const rows = getRows();
   const N = rows.length;
-  const { topDeltaY, sec1DeltaY, sec2DeltaY, firstRowTop } = calcLayout(N);
+
+  // sec1 실제 렌더링 크기 측정 (translate 초기화 후 측정)
+  const sec1El = document.getElementById('sec1');
+  sec1El.setAttribute('transform', 'translate(0,0)');
+  let sec1BBox;
+  try { sec1BBox = sec1El.getBBox(); } catch(e) {}
+
+  const { topDeltaY, sec1DeltaY, sec2DeltaY, firstRowTop } = calcLayout(N, sec1BBox);
 
   // 인트로 텍스트 이동 (N≥8일 때 위로 올림)
   [173, 197, 221, 245].forEach((y, i) => {
@@ -723,7 +732,7 @@ function renderTable() {
   });
 
   // 섹션2(user=불편을..): 정중앙 위치 적용
-  document.getElementById('sec1').setAttribute('transform', `translate(0,${sec1DeltaY})`);
+  sec1El.setAttribute('transform', `translate(0,${sec1DeltaY})`);
   // 섹션3(user=공사일정): 항상 하단 고정
   const sec2El = document.getElementById('sec2');
   sec2El.setAttribute('transform', `translate(0,${sec2DeltaY})`);
